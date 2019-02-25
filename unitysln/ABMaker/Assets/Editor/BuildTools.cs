@@ -257,7 +257,7 @@ public static class BuildTools
             AssetDatabase.CreateAsset(pack, mfPath);
 
             string filePath = string.Format("Assets/_out/{0}/{1}", uuid, Path.GetFileName(selectPath));
-            AssetDatabase.CopyAsset(selectPath, filePath);
+            AssetDatabase.MoveAsset(selectPath, filePath);
         }
 
         AssetDatabase.SaveAssets();
