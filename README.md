@@ -30,4 +30,9 @@
 - 在选中的文件上执行右键菜单中的"Process",完成后会在Assets/_out目录得到很多uuid命名的文件，将这些文件夹移动到对应的资源组文件夹中。
 - 执行BuildTools/Refresh刷新数据。
 
+## 导出场景
+
+- 打开一个场景文件。
+- 先将场景中使用到的prefab通过process处理为资源文件。
+- 执行BuildTools/Scene/Export，此操作将会将场景中所有用到prefab的对象输出到_asset/scene/scene.json文件中。
 
