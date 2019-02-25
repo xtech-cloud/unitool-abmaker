@@ -5,23 +5,6 @@ using System.IO;
 using SimpleJSON;
 using System.Text.RegularExpressions;
 
-[System.Serializable]
-public class ABFile
-{
-    public string name = "";
-    public string alias = "";
-}
-
-public class ABPack : ScriptableObject
-{
-
-    public string uuid = "";
-
-    public string path = "";
-
-    public string alias = "";
-    public List<ABFile> files = new List<ABFile>(0);
-}
 
 public static class BuildTools
 {
@@ -100,9 +83,6 @@ public static class BuildTools
 
     private static void refresh()
     {
-
-        int count = 0;
-
         string path = System.IO.Path.Combine(Application.dataPath, "Packages");
 
         DirectoryInfo test = new DirectoryInfo(path);
@@ -118,11 +98,26 @@ public static class BuildTools
 
                     List<string> files = new List<string>();
                     ABPack pack = null;
+
+                    string mfPath = Path.Combine(package, "_manifest.asset");
+                    string mfAsset = string.Format("Assets/Packages/{0}/{1}/_manifest.asset", groupname, packagename);
+                    if(!File.Exists(mfPath))
+                    {
+                        pack = ScriptableObject.CreateInstance<ABPack>();
+                        pack.uuid = packagename;
+                        pack.path = groupname;
+                        AssetDatabase.CreateAsset(pack, mfAsset);
+                    }
+                    else
+                    {
+                        pack = AssetDatabase.LoadAssetAtPath<ABPack>(mfAsset);
+                        pack.uuid = packagename;
+                        pack.path = groupname;
+                    }
+
                     foreach (string file in Directory.GetFiles(package))
                     {
                         string filename = Path.GetFileName(file);
-
-                        string assetPath = string.Format("Assets/Packages/{0}/{1}/{2}", groupname, packagename, filename);
 
                         //ignore unity's meta file
                         if (file.EndsWith(".meta"))
@@ -132,12 +127,10 @@ public static class BuildTools
 
                         if (Path.GetFileName(file).Equals("_manifest.asset"))
                         {
-                            pack = AssetDatabase.LoadAssetAtPath<ABPack>(assetPath);
-                            pack.uuid = packagename;
-                            pack.path = groupname;
                             continue;
                         }
 
+                        string assetPath = string.Format("Assets/Packages/{0}/{1}/{2}", groupname, packagename, filename);
                         AssetImporter.GetAtPath(assetPath).SetAssetBundleNameAndVariant(packagename, "");
                         files.Add(Path.GetFileName(file));
                     }
@@ -164,8 +157,6 @@ public static class BuildTools
                         }
                         pack.files.Add(abFile);
                     }
-
-                    count += 1;
                 }
             }
         }
@@ -237,7 +228,7 @@ public static class BuildTools
 
         ABPack pack = ScriptableObject.CreateInstance<ABPack>();
         pack.uuid = uuid;
-        pack.path = group.Replace(".", "/");
+        pack.path = group;
         string mfPath = string.Format("Assets/Packages/{0}/{1}/_manifest.asset", group, uuid);
         AssetDatabase.CreateAsset(pack, mfPath);
         AssetDatabase.SaveAssets();
