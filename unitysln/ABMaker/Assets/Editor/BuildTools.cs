@@ -5,6 +5,20 @@ using System.IO;
 using SimpleJSON;
 using System.Text.RegularExpressions;
 
+[System.Serializable]
+public class SceneObject
+{
+    public string res = "";
+    public string name = "";
+    public Vector3 position = Vector3.zero;
+    public Vector3 rotation = Vector3.zero;
+    public Vector3 scale = Vector3.one;
+}
+
+public class SceneMap
+{
+    public List<SceneObject> objs = new List<SceneObject>();
+}
 
 public static class BuildTools
 {
@@ -14,6 +28,7 @@ public static class BuildTools
 
     static string outpath = System.IO.Path.Combine(Application.dataPath, "../../_assets/");
     static string outpath_manifest = System.IO.Path.Combine(outpath, "meta");
+    static string outpath_scenemap = System.IO.Path.Combine(outpath, "scene");
 
     [MenuItem("BuildTools/AssetBundle/WebGL")]
     public static void BuildAssetBundleForWebGL()
@@ -69,16 +84,66 @@ public static class BuildTools
 
 
     [MenuItem("BuildTools/Manifests/Export")]
-    public static void BuildManifests()
+    public static void ExportManifests()
     {
         Directory.CreateDirectory(outpath_manifest);
-        buildManifests();
+        exportManifests();
     }
 
     [MenuItem("BuildTools/Refresh")]
     public static void Refresh()
     {
         refresh();
+    }
+
+    [MenuItem("BuildTools/Scene/Export")]
+    public static void ExportScene()
+    {
+        Directory.CreateDirectory(outpath_scenemap);
+
+        SceneMap sceneMap = new SceneMap();
+
+        GameObject[] objs = (GameObject[])Resources.FindObjectsOfTypeAll(typeof(GameObject));
+        foreach(GameObject go in objs)
+        {
+            if(PrefabUtility.GetPrefabType(go) != PrefabType.PrefabInstance)
+                continue;
+            
+            Object parentObject = PrefabUtility.GetPrefabParent(go); 
+            string assetPath = AssetDatabase.GetAssetPath(parentObject);
+
+            if(!assetPath.StartsWith("Assets/Packages"))
+                continue;
+
+            string[] paths = assetPath.Split('/');
+            if(paths.Length != 5)
+                continue;
+
+            SceneObject obj = new SceneObject();
+            obj.name = go.name;
+            obj.res = string.Format("{0}/{1}", paths[3], paths[4]);
+            obj.position = go.transform.position;
+            obj.rotation = go.transform.rotation.eulerAngles;
+            obj.scale = go.transform.localScale;
+
+            double px = System.Math.Round(obj.position.x, 4);
+            double py = System.Math.Round(obj.position.y, 4);
+            double pz = System.Math.Round(obj.position.z, 4);
+            double rx = System.Math.Round(obj.rotation.x, 4);
+            double ry = System.Math.Round(obj.rotation.y, 4);
+            double rz = System.Math.Round(obj.rotation.z, 4);
+            double sx = System.Math.Round(obj.scale.x, 4);
+            double sy = System.Math.Round(obj.scale.y, 4);
+            double sz = System.Math.Round(obj.scale.z, 4);
+            obj.position = new Vector3((float)px, (float)py, (float)pz);
+            obj.rotation = new Vector3((float)rx, (float)ry, (float)rz);
+            obj.scale = new Vector3((float)sx, (float)sy, (float)sz);
+
+            sceneMap.objs.Add(obj);
+        }
+        string json = JsonUtility.ToJson(sceneMap, true);
+        File.WriteAllText(Path.Combine(outpath_scenemap, "scene.json"), json);
+        Debug.Log("export scene at " + outpath_scenemap);
     }
 
     private static void refresh()
@@ -172,7 +237,7 @@ public static class BuildTools
         Debug.Log("refresh finish");
     }
 
-    private static void buildManifests()
+    private static void exportManifests()
     {
         string path = System.IO.Path.Combine(Application.dataPath, "Packages");
 
