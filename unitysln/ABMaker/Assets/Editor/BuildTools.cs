@@ -1,6 +1,8 @@
 ﻿using UnityEditor;
 using UnityEngine;
+using System.Text;
 using System.Collections.Generic;
+using System.Security.Cryptography;
 using System.IO;
 using SimpleJSON;
 using System.Text.RegularExpressions;
@@ -216,6 +218,7 @@ public static class BuildTools
                     {
                         ABFile abFile = new ABFile();
                         abFile.name = Path.GetFileNameWithoutExtension(file);
+                        abFile.code = ToUUID(string.Format("{0}.{1}", packagename,abFile.name));
                         if(abFiles.ContainsKey(abFile.name))
                         {
                             abFile.alias = abFiles[abFile.name].alias;
@@ -328,5 +331,19 @@ public static class BuildTools
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
     }
+
+    private static string ToUUID(string _text)
+    {
+        MD5 md5 = MD5.Create();
+        byte[] byteOld = Encoding.UTF8.GetBytes(_text);
+        byte[] byteNew = md5.ComputeHash(byteOld);
+        StringBuilder sb = new StringBuilder();
+        foreach (byte b in byteNew)
+        {
+            sb.Append(b.ToString("x2"));
+        }
+        return sb.ToString();
+    }
+
 
 }

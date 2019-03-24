@@ -7,6 +7,7 @@ public class ABFile
 {
     public string name = "";
     public string alias = "";
+    public string code = "";
 }
 
 public class ABPack : ScriptableObject
